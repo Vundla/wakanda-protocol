@@ -1,0 +1,1 @@
+# AI module - multilingual AI, skills assessment, disability support

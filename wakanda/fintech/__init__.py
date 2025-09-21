@@ -1,0 +1,1 @@
+# Fintech module - financial services and payment processing
