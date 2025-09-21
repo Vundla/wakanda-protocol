@@ -38,8 +38,8 @@ def create_app() -> FastAPI:
         version=settings.version,
         description="African Sovereignty Blueprint - Full-stack platform for financial, technological, and civic empowerment",
         debug=settings.debug,
-        docs_url="/docs" if settings.debug else None,
-        redoc_url="/redoc" if settings.debug else None,
+        docs_url="/docs",
+        redoc_url="/redoc",
     )
     
     # Add middleware

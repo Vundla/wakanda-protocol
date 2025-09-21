@@ -70,7 +70,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token_expires = timedelta(minutes=settings.security.access_token_expire_minutes)
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = security_manager.create_access_token(
         data={"sub": user["username"], "scopes": ["read", "write"]},
         expires_delta=access_token_expires
@@ -79,7 +79,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "expires_in": settings.security.access_token_expire_minutes * 60
+        "expires_in": settings.access_token_expire_minutes * 60
     }
 
 

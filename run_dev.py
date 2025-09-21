@@ -16,7 +16,6 @@ if __name__ == "__main__":
         "wakanda.api.main:app",
         host=settings.host,
         port=settings.port,
-        debug=True,
         reload=True,
         access_log=True
     )
