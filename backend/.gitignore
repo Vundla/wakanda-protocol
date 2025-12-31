@@ -1,0 +1,9 @@
+/_build/
+/deps/
+/.elixir_ls/
+cover/
+build/
+node_modules/
+*.ez
+.erlang.cookie
+.env
