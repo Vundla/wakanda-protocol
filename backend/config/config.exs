@@ -1,5 +1,9 @@
 import Config
 
+# Configure Ecto repos
+config :backend,
+  ecto_repos: [Backend.Repo, Backend.RepoReplica, Backend.RepoCockroach]
+
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]

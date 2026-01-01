@@ -16,8 +16,11 @@ defmodule Backend.Router do
   end
 
   get "/api" do
-    body = Jason.encode!(%{message: "Welcome to Wakanda Protocol API", version: "0.1.0"})
-    gleam_msg = gleam_hello()
+    gleam_msg =
+      case Backend.PluginManager.call(:gleam, "Wakanda") do
+        {:ok, msg} -> msg
+        {:error, _} -> nil
+      end
 
     body =
       Jason.encode!(%{
@@ -30,14 +33,14 @@ defmodule Backend.Router do
   end
 
   get "/gleam" do
-    case gleam_hello() do
-      nil ->
-        body = Jason.encode!(%{error: "Gleam module not available. Run `gleam build`."})
-        send_resp(conn, 503, body)
-
-      msg ->
+    case Backend.PluginManager.call(:gleam, "Wakanda") do
+      {:ok, msg} ->
         body = Jason.encode!(%{message: msg})
         send_resp(conn, 200, body)
+
+      {:error, _reason} ->
+        body = Jason.encode!(%{error: "Service unavailable"})
+        send_resp(conn, 503, body)
     end
   end
 
@@ -67,16 +70,5 @@ defmodule Backend.Router do
 
     body = Jason.encode!(%{error: "Internal Server Error"})
     send_resp(conn, conn.status || 500, body)
-  end
-
-  defp gleam_hello do
-    mod = :backend_gleam
-
-    with {:module, ^mod} <- :code.ensure_loaded(mod),
-         true <- function_exported?(mod, :hello, 1) do
-      apply(mod, :hello, ["Wakanda"])
-    else
-      _ -> nil
-    end
   end
 end

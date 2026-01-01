@@ -30,6 +30,8 @@ defmodule Backend.MixProject do
       {:plug, "~> 1.15"},
       {:plug_cowboy, "~> 2.7"},
       {:jason, "~> 1.4"},
+      {:ecto_sql, "~> 3.11"},
+      {:postgrex, "~> 0.17"},
       {:excoveralls, "~> 0.18", only: :test, runtime: false}
     ]
   end

@@ -10,6 +10,14 @@ defmodule Backend.RouterTest do
     # Ensure Gleam beams are built and on the code path for Gleam-backed endpoints
     System.cmd("gleam", ["build"], cd: Path.expand("..", __DIR__))
     Backend.GleamLoader.add_paths()
+
+    unless Process.whereis(Backend.PluginSupervisor) do
+      start_supervised!(Backend.PluginSupervisor)
+    end
+
+    unless Process.whereis(Backend.PluginManager) do
+      start_supervised!(Backend.PluginManager)
+    end
     :ok
   end
 
@@ -63,7 +71,7 @@ defmodule Backend.RouterTest do
 
     assert conn.status == 503
     body = Jason.decode!(conn.resp_body)
-    assert body["error"] =~ "Gleam module not available"
+    assert body["error"] == "Service unavailable"
 
     # Restore Gleam module for subsequent tests
     Enum.each(gleam_paths, &:code.add_patha/1)

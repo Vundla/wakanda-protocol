@@ -7,9 +7,25 @@ defmodule Backend.Application do
 
     port = Backend.Config.port()
 
-    children = [
-      {Plug.Cowboy, scheme: :http, plug: Backend.Router, options: [port: port]}
-    ]
+    children = 
+      if Mix.env() == :test do
+        [
+          Backend.Repo,
+          Backend.RepoReplica,
+          Backend.RepoCockroach,
+          Backend.PluginSupervisor,
+          {Plug.Cowboy, scheme: :http, plug: Backend.Router, options: [port: port]}
+        ]
+      else
+        [
+          Backend.Repo,
+          Backend.RepoReplica,
+          Backend.RepoCockroach,
+          Backend.PluginSupervisor,
+          Backend.PluginManager,
+          {Plug.Cowboy, scheme: :http, plug: Backend.Router, options: [port: port]}
+        ]
+      end
 
     opts = [strategy: :one_for_one, name: Backend.Supervisor]
     Supervisor.start_link(children, opts)
