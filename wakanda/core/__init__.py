@@ -1,0 +1,1 @@
+# Core module - foundational components
