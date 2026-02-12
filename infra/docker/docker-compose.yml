@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # Knowledge Hub Service
+  knowledge-hub:
+    build:
+      context: ../services/knowledge_hub
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    volumes:
+      - ../services/knowledge_hub:/app
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Finance Service
+  finance:
+    build:
+      context: ../services/finance
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - MASTERCARD_API_URL=${MASTERCARD_API_URL}
+      - MASTERCARD_CONSUMER_KEY=${MASTERCARD_CONSUMER_KEY}
+      - MASTERCARD_PRIVATE_KEY=${MASTERCARD_PRIVATE_KEY}
+    volumes:
+      - ../services/finance:/app
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Minerals Predictor Service
+  minerals:
+    build:
+      context: ../services/minerals
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    volumes:
+      - ../services/minerals:/app
+      - minerals-models:/app/models
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Drones Service
+  drones:
+    build:
+      context: ../services/drones
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    volumes:
+      - ../services/drones:/app
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway (NGINX)
+  gateway:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    networks:
+      - wakanda-network
+    depends_on:
+      - knowledge-hub
+      - finance
+      - minerals
+      - drones
+    restart: unless-stopped
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # PostgreSQL for persistent data
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: wakanda
+      POSTGRES_USER: wakanda_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wakanda_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - wakanda-network
+    restart: unless-stopped
+
+networks:
+  wakanda-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
+  minerals-models:
+  prometheus-data:
+  grafana-data:
